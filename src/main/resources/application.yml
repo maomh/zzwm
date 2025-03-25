@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: zzwm
+
+  # DB configuration
+  datasource:
+    username: zzwm
+    password: Abc@123456
+    url: jdbc:mysql://localhost:3306/zzwm?useSSL=false&serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
+      connection-test-query: SELECT 1
+
+  # JPA configuration
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+          fetch_size: 100
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: Abc@123456
