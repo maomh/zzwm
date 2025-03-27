@@ -32,9 +32,10 @@ spring:
       host: localhost
       port: 6379
 
-  # 临时 debug 用户
+# custom
+custom:
   security:
-    user:
-      name: debug
-      password: debug
-      roles: ADMIN
+    users:
+      - username: debug
+        password: debug
+        roles: DEBUG

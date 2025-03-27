@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor(staticName = "of")
+@AllArgsConstructor
 public class ValidError {
     private String field;
     private String message;

@@ -2,7 +2,9 @@ package site.mhjn.zzwm.security;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-public class DirectPasswordEncoder implements PasswordEncoder {
+public class NoopPasswordEncoder implements PasswordEncoder {
+    public static final String ID = "noop";
+
     @Override
     public String encode(CharSequence rawPassword) {
         return rawPassword.toString();

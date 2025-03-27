@@ -14,6 +14,7 @@ public class Result {
     private int code;
     private String message;
     private Object data;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<ValidError> validErrors;
 
     public Result(ResultStatus status) {
