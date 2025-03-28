@@ -1,10 +1,13 @@
 package site.mhjn.zzwm.controller.advice;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ElementKind;
+import jakarta.validation.Path;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import site.mhjn.zzwm.exception.BusinessException;
@@ -36,5 +39,30 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Result> handleUnknownException(Exception e, HttpServletRequest request) {
         log.error("Request URI: {}, Unknown Exception: {}", request.getRequestURI(), e.getMessage(), e);
         return ResponseEntity.ok(Result.failure());
+    }
+
+    @ExceptionHandler(ServletRequestBindingException.class)
+    public ResponseEntity<Result> handleServletRequestBindingException(ServletRequestBindingException e, HttpServletRequest request) {
+        log.info("Request URI: {}, Servlet Request Binding Exception: {}", request.getRequestURI(), e.getMessage());
+        return ResponseEntity.ok(Result.parameterError(e.getMessage()));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Result> handleConstraintViolationException(
+            ConstraintViolationException e, HttpServletRequest request) {
+
+        log.info("Request URI: {}, Constrain Violation Exception: {}", request.getRequestURI(), e.getMessage());
+        Result result = Result.parameterError(e.getMessage());
+
+        e.getConstraintViolations().forEach(c -> {
+            for (Path.Node node : c.getPropertyPath()) {
+                if (node.getKind() == ElementKind.PARAMETER) {
+                    result.setMessage("参数 '" + node.getName() + "' " + c.getMessage());
+                    break;
+                }
+            }
+        });
+
+        return ResponseEntity.ok(result);
     }
 }
