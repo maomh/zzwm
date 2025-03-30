@@ -50,6 +50,7 @@ public class SecurityConfig {
                         authorizeHttpRequests
                                 .requestMatchers("/acutator/**").permitAll()
                                 .requestMatchers("/error").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs").permitAll()
                                 .requestMatchers("/demo/**").hasRole("DEBUG")
                                 .anyRequest().authenticated()
                 )

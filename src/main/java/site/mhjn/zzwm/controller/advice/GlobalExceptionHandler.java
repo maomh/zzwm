@@ -6,10 +6,12 @@ import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import site.mhjn.zzwm.exception.BusinessException;
 import site.mhjn.zzwm.response.Result;
 import site.mhjn.zzwm.response.ValidError;
@@ -36,15 +38,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Result> handleUnknownException(Exception e, HttpServletRequest request) {
+    public ResponseEntity<Result> handleUnknownException(Exception e, HttpServletRequest request) throws Exception {
+        // 如果是Spring MVC的常规异常，则直接抛出，交给Spring MVC处理
+        if (e instanceof ErrorResponse error) {
+            log.info("Request URI: {}, error status code: {}, error message: {}", request.getRequestURI(), error.getStatusCode(), e.getMessage());
+            throw e;
+        }
         log.error("Request URI: {}, Unknown Exception: {}", request.getRequestURI(), e.getMessage(), e);
         return ResponseEntity.ok(Result.failure());
-    }
-
-    @ExceptionHandler(ServletRequestBindingException.class)
-    public ResponseEntity<Result> handleServletRequestBindingException(ServletRequestBindingException e, HttpServletRequest request) {
-        log.info("Request URI: {}, Servlet Request Binding Exception: {}", request.getRequestURI(), e.getMessage());
-        return ResponseEntity.ok(Result.parameterError(e.getMessage()));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
