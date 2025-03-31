@@ -1,6 +1,16 @@
 package site.mhjn.zzwm.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.ExternalDocumentation;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.extensions.Extension;
+import io.swagger.v3.oas.annotations.media.DependentSchema;
+import io.swagger.v3.oas.annotations.media.DependentSchemas;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperties;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import site.mhjn.zzwm.util.CollectionUtil;
 import site.mhjn.zzwm.util.StringUtil;
@@ -11,10 +21,14 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Result {
+    @Schema(description = "操作结果状态码, 目前有：", example = "0")
     private int code;
+    @Schema(description = "操作结果信息", example = "操作成功")
     private String message;
+    @Schema(description = "操作结果数据, 由接口实现者定义")
     private Object data;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(description = "Validation 校验错误信息", implementation = ValidError.class)
     private List<ValidError> validErrors;
 
     public Result(ResultStatus status) {

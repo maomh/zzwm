@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
@@ -20,24 +21,21 @@ import java.util.Map;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         String bcrypt = "bcrypt";
         BCryptPasswordEncoder bcryptPasswordEncoder = new BCryptPasswordEncoder();
-
         String noop = "noop";
         NoopPasswordEncoder noopPasswordEncoder = new NoopPasswordEncoder();
-
         Map<String, PasswordEncoder> encoders = Map.of(
                 bcrypt, bcryptPasswordEncoder,
                 noop, noopPasswordEncoder
         );
-
         // 默认使用 bcrypt 加密 - 加密结果是 "{bcrypt}$2a$10$..."
         DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder(bcrypt, encoders);
-
         // 如果密码没有"{xxx}"前缀，则使用 noop 进行匹配
         delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(noopPasswordEncoder);
         return delegatingPasswordEncoder;
@@ -48,9 +46,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeHttpRequests ->
                         authorizeHttpRequests
-                                .requestMatchers("/acutator/**").permitAll()
+                                .requestMatchers("/actuator/**").permitAll()
                                 .requestMatchers("/error").permitAll()
-                                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs").permitAll()
+                                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs").hasRole("SWAGGER")
                                 .requestMatchers("/demo/**").hasRole("DEBUG")
                                 .anyRequest().authenticated()
                 )
@@ -81,6 +79,7 @@ public class SecurityConfig {
         return RoleHierarchyImpl.fromHierarchy("""
                 ROLE_DEBUG > ROLE_USER
                 ROLE_DEBUG > ROLE_ADMIN
+                ROLE_DEBUG > ROLE_SWAGGER
                 """);
     }
 }
