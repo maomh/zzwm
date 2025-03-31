@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
         List<ValidError> validErrors = e.getBindingResult().getFieldErrors().stream()
                 .map(f -> new ValidError(f.getField(), f.getDefaultMessage()))
                 .toList();
-        return ResponseEntity.ok(Result.validateError(validErrors));
+        return ResponseEntity.badRequest().body(Result.validateError(validErrors));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
                 }
             }
         });
-        return ResponseEntity.ok(result);
+        return ResponseEntity.badRequest().body(result);
     }
 
     @ExceptionHandler(BusinessException.class)
