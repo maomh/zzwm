@@ -12,7 +12,7 @@ public class ServletFilterConfig {
     public FilterRegistrationBean<RequestInfoFilter> requestInfoFilter() {
         FilterRegistrationBean<RequestInfoFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new RequestInfoFilter());
-        filterRegistrationBean.addUrlPatterns("/demo/*");
+        filterRegistrationBean.addUrlPatterns("/demo/*", "/login");
         filterRegistrationBean.setOrder(-1);
         return filterRegistrationBean;
     }

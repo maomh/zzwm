@@ -35,6 +35,8 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+    try-it-out-enabled: false
+    supported-submit-methods:
   api-docs:
     path: /v3/api-docs
 

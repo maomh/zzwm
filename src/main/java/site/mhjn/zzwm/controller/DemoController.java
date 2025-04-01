@@ -26,19 +26,7 @@ public class DemoController {
 
     @HasRoleAdmin
     @PostMapping(path = "/body", produces = "application/json", consumes = "application/json")
-    @Operation(
-            summary = "请求体演示接口",
-            description = "请求体演示接口",
-            parameters = {
-                    @Parameter(
-                            name = "id-token",
-                            description = "JWT认证Token字符串",
-                            required = true,
-                            in = ParameterIn.HEADER,
-                            example = Constants.EXAMPLE_OF_ID_TOKEN
-                    )
-            }
-    )
+    @Operation(summary = "请求体提交")
     public Result body(@Valid @RequestBody DemoDTO demoDTO) {
         return Result.success(demoDTO);
     }

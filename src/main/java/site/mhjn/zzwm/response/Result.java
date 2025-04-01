@@ -1,19 +1,10 @@
 package site.mhjn.zzwm.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.ExternalDocumentation;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.extensions.Extension;
-import io.swagger.v3.oas.annotations.media.DependentSchema;
-import io.swagger.v3.oas.annotations.media.DependentSchemas;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.SchemaProperties;
-import io.swagger.v3.oas.annotations.media.SchemaProperty;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import site.mhjn.zzwm.util.CollectionUtil;
-import site.mhjn.zzwm.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +28,7 @@ public class Result {
     }
 
     public void setMessage(String message) {
-        if (StringUtil.isNotEmpty(message)) {
+        if (StringUtils.isNotEmpty(message)) {
             this.message = message;
         }
     }
@@ -76,7 +67,7 @@ public class Result {
      */
     public static Result failure(String message) {
         Result result = new Result(ResultStatus.FAILURE);
-        if (StringUtil.isNotEmpty(message)) {
+        if (StringUtils.isNotEmpty(message)) {
             result.setMessage(message);
         }
         return result;
@@ -89,7 +80,7 @@ public class Result {
      */
     public static Result businessError(String message) {
         Result result = new Result(ResultStatus.BUSINESS_ERROR);
-        if (StringUtil.isNotEmpty(message)) {
+        if (StringUtils.isNotEmpty(message)) {
             result.setMessage(message);
         }
         return result;

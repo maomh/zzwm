@@ -18,6 +18,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import site.mhjn.zzwm.exception.BusinessException;
 import site.mhjn.zzwm.response.Result;
 import site.mhjn.zzwm.response.ValidError;
+import site.mhjn.zzwm.util.JsonUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,12 +29,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Result> handleValidationError(MethodArgumentNotValidException e, HttpServletRequest request) {
-        log.info("Request URI: {}, Validation Error: {}", request.getRequestURI(),
-                e.getBindingResult().getFieldErrors().stream()
-                        .map(f -> f.getField() + ":" + f.getDefaultMessage()).collect(Collectors.joining(";")));
+
         List<ValidError> validErrors = e.getBindingResult().getFieldErrors().stream()
                 .map(f -> new ValidError(f.getField(), f.getDefaultMessage()))
                 .toList();
+
+        log.info("Request {} has validation error: {}", request.getRequestURI(), JsonUtil.toJsonString(validErrors));
+
         return ResponseEntity.badRequest().body(Result.validateError(validErrors));
     }
 

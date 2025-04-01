@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@PreAuthorize("hasRole('ADMINSSSS')")
+@PreAuthorize("hasRole('ADMIN')")
 public @interface HasRoleAdmin {
     // 该注解用于标记需要 ADMIN 角色的接口
     // 可以在方法或类上使用
