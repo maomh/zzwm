@@ -3,7 +3,7 @@ package site.mhjn.zzwm.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,12 +17,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatchers;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import site.mhjn.zzwm.security.NoopPasswordEncoder;
-import site.mhjn.zzwm.util.RequestUtil;
+import site.mhjn.zzwm.security.filter.JwtAuthenticateFilter;
 
 import java.util.Map;
 
@@ -52,18 +51,12 @@ public class SecurityConfig {
 
     @Bean
     @Order(-1)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .authorizeHttpRequests(authorizeHttpRequests ->
-                        authorizeHttpRequests
-                                .requestMatchers("/demo/**").hasRole("DEBUG")
-                                .anyRequest().authenticated()
-                )
-                .sessionManagement(sessionManagement ->
-                        sessionManagement
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .httpBasic(withDefaults())
+                .securityMatcher("/admin/**")
+                .authorizeHttpRequests(a -> a.anyRequest().hasRole("ADMIN"))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .formLogin(f -> f.loginPage("/admin/login").permitAll())
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(withDefaults())
                 .requestCache(RequestCacheConfigurer::disable)
@@ -73,22 +66,33 @@ public class SecurityConfig {
 
     @Bean
     @Order(-2)
+    public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher("/api/**")
+                .authorizeHttpRequests(a -> a
+                        .requestMatchers(HttpMethod.POST, "/api/login", "/api/logout").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(withDefaults())
+                .requestCache(RequestCacheConfigurer::disable)
+                .servletApi(withDefaults())
+                .addFilterBefore(new JwtAuthenticateFilter(), UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @Order(-3)
     public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .securityMatcher(
                         "/swagger-ui.html", "/swagger-ui/**",
                         "/v3/api-docs", "/v3/api-docs/**",
-                        "/default-ui.css", "/login", "/logout"
+                        "/login", "/logout"
                 )
-                .authorizeHttpRequests(authorizeHttpRequests ->
-                        authorizeHttpRequests
-                                .requestMatchers("/default-ui.css").permitAll()
-                                .anyRequest().hasRole("SWAGGER")
-                )
-                .formLogin(formLoginConfigurer ->
-                        formLoginConfigurer.successHandler((req, resp, auth) ->
-                                resp.sendRedirect("/swagger-ui.html"))
-                )
+                .authorizeHttpRequests(a -> a.anyRequest().hasRole("SWAGGER"))
+                .formLogin(f -> f.successHandler(sendRedirectSuccessHandler("/swagger-ui.html")))
                 .logout(withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .csrf(AbstractHttpConfigurer::disable)
@@ -106,7 +110,8 @@ public class SecurityConfig {
                         "/actuator/**",
                         "/error",
                         "/favicon.ico",
-                        "/webjars/**"
+                        "/webjars/**",
+                        "/default-ui.css"
                 );
     }
 
@@ -127,5 +132,12 @@ public class SecurityConfig {
                 ROLE_DEBUG > ROLE_ADMIN
                 ROLE_DEBUG > ROLE_SWAGGER
                 """);
+    }
+
+
+    private AuthenticationSuccessHandler sendRedirectSuccessHandler(String successUrl) {
+        return (request, response, auth) ->
+                response.sendRedirect(successUrl);
+
     }
 }
