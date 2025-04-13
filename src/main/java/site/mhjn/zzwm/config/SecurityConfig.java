@@ -1,27 +1,24 @@
 package site.mhjn.zzwm.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import site.mhjn.zzwm.security.NoopPasswordEncoder;
-import site.mhjn.zzwm.security.filter.JwtAuthenticateFilter;
 
 import java.util.Map;
 
@@ -31,6 +28,22 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableMethodSecurity
 @EnableWebSecurity(debug = true)
 public class SecurityConfig {
+    public static final String[] IGNORE_URLS = {
+            "/actuator/**",
+            "/error",
+            "/favicon.ico",
+            "/webjars/**"
+    };
+    public static final String[] SWAGGER_URLS = {
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs",
+            "/v3/api-docs/**"
+    };
+    private static final String[] ADMIN_URLS = {
+            "/admin/**",
+            "/demo/**",
+    };
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -51,68 +64,19 @@ public class SecurityConfig {
 
     @Bean
     @Order(-1)
-    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .securityMatcher("/admin/**")
-                .authorizeHttpRequests(a -> a.anyRequest().hasRole("ADMIN"))
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .formLogin(f -> f.loginPage("/admin/login").permitAll())
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(withDefaults())
-                .requestCache(RequestCacheConfigurer::disable)
-                .servletApi(withDefaults())
-                .build();
-    }
-
-    @Bean
-    @Order(-2)
-    public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .securityMatcher("/api/**")
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers(HttpMethod.POST, "/api/login", "/api/logout").permitAll()
+                        .requestMatchers(IGNORE_URLS).permitAll()
+                        .requestMatchers(SWAGGER_URLS).hasRole("SWAGGER")
+                        .requestMatchers(ADMIN_URLS).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(withDefaults())
-                .requestCache(RequestCacheConfigurer::disable)
-                .servletApi(withDefaults())
-                .addFilterBefore(new JwtAuthenticateFilter(), UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
-
-    @Bean
-    @Order(-3)
-    public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .securityMatcher(
-                        "/swagger-ui.html", "/swagger-ui/**",
-                        "/v3/api-docs", "/v3/api-docs/**",
-                        "/login", "/logout"
-                )
-                .authorizeHttpRequests(a -> a.anyRequest().hasRole("SWAGGER"))
-                .formLogin(f -> f.successHandler(sendRedirectSuccessHandler("/swagger-ui.html")))
-                .logout(withDefaults())
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(withDefaults())
-                .requestCache(withDefaults())
                 .servletApi(withDefaults())
                 .build();
-    }
-
-    @Bean
-    public WebSecurityCustomizer ignoringResourcesCustomizer() {
-        return web -> web
-                .ignoring()
-                .requestMatchers(
-                        "/actuator/**",
-                        "/error",
-                        "/favicon.ico",
-                        "/webjars/**",
-                        "/default-ui.css"
-                );
     }
 
     @Bean
@@ -134,10 +98,10 @@ public class SecurityConfig {
                 """);
     }
 
-
-    private AuthenticationSuccessHandler sendRedirectSuccessHandler(String successUrl) {
-        return (request, response, auth) ->
-                response.sendRedirect(successUrl);
-
+    public static class LoginSuccessRouter implements AuthenticationSuccessHandler {
+        @Override
+        public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse resp, Authentication auth) {
+            req.isUserInRole("ADMIN");
+        }
     }
 }
